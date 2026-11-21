@@ -8,5 +8,6 @@
 ## X-Website: https://github.com/mythicautopsy/Kennel
 ## X-License: MIT
 ## IconTexture: Interface\Icons\Ability_Hunter_BeastCall
+## X-Curse-Project-ID: 1818387
 
 Kennel.lua
