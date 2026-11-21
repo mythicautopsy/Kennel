@@ -1,0 +1,4 @@
+<Bindings>
+    <Binding name="CLICK KennelPet:LeftButton" header="KENNEL"></Binding>
+    <Binding name="CLICK KennelPet:RightButton"></Binding>
+</Bindings>
