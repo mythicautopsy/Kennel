@@ -1,0 +1,37 @@
+# Kennel
+
+Shared WoW Forever rules: ../CLAUDE.md (if present locally).
+
+Hunter bar with three icons: pet (call / revive / feed), pet food, ammo, plus
+auto-buy ammo at vendors and an options window. Released as Beta.
+
+## Files
+- `Kennel.toc`, `Kennel.lua` (~1,500 lines, all logic and the options window),
+  `Bindings.xml` (`CLICK KennelPet:LeftButton` / `RightButton`).
+- `Kennel-summary.md` — design notes, Forever findings, open assumptions and a
+  per-version change log. **Read it before touching pet-button, food or ammo
+  logic**, and add a `Changes` entry for every version. (Its top "never loaded
+  in game" status line is out of date; the change log has in-game reports.)
+
+## SavedVariables `KennelDB`
+- From `defaults`: food, lowAmmo (200), lowFood (5), autoBuyAmmo, ammoTarget
+  (1000), locked, shown, scale, point/x/y.
+- Also: `petDead`, `lastPet`, `refused[family]`, `tooLow`.
+
+## Known open problem
+- Left-click Call Pet still fails on Forever (see 2.10/2.11 in the summary).
+  Forever's spellbook shows "Call <pet name>"; summoning is Call Pet 1–5
+  (IDs 883, 83242–83245). Don't "fix" this by guessing — add diagnostics to
+  `/kennel spells` / `/kennel clicks` and ask me to test.
+
+## Behaviour to keep
+- Pet button is a secure button driven by a state driver; never change its
+  attributes in combat (queue for PLAYER_REGEN_ENABLED via `ApplyMacros`).
+- Setup steps run through `Try()` so one failure prints once instead of
+  breaking the addon.
+- Food: lowest item level first; learn from refusals. Ammo: bags + quiver,
+  matching weapon type; auto-buy never exceeds money or bag space.
+- Not wanted: an Auto Shot bar.
+
+## Slash: `/kennel`, `/kn` — opens options; help, food, buy, lock/unlock,
+spells, clicks, debug, show/hide, scale, reset.
