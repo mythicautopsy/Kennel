@@ -46,9 +46,8 @@ Type `/kennel` (or right-click the bar's drag handle) to change everything: show
 2. **Fully quit and restart the game.** Forever doesn't load new addon code on `/reload`.
 3. If it shows as out of date, tick "Load out of date AddOns".
 
-## Known issues (beta)
+## Known issues
 
-- Call and revive from the pet button are still being fixed on Forever. Casting them from your spellbook works as usual.
 - Food kinds are guessed from item names; unusual food names may be missed. Set those with `/kennel food <name>`.
 - Auto food doesn't know which foods give a "Well Fed" buff.
 
