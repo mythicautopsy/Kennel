@@ -3,7 +3,7 @@
 Shared WoW Forever rules: ../CLAUDE.md (if present locally).
 
 Hunter bar with three icons: pet (call / revive / feed), pet food, ammo, plus
-auto-buy ammo at vendors and an options window. Released as Beta.
+auto-buy ammo at vendors and an options window. Released (no longer Beta).
 
 ## Files
 - `Kennel.toc`, `Kennel.lua` (~1,500 lines, all logic and the options window),
