@@ -18,13 +18,11 @@ auto-buy ammo at vendors and an options window. Released as Beta.
   (1000), locked, shown, scale, point/x/y.
 - Also: `petDead`, `lastPet`, `refused[family]`, `tooLow`.
 
-## Known open problem
-- Left-click Call Pet still fails on Forever (see 2.10/2.11 in the summary).
-  Forever's spellbook shows "Call <pet name>"; summoning is Call Pet 1–5
-  (IDs 883, 83242–83245). Don't "fix" this by guessing — add diagnostics to
-  `/kennel spells` / `/kennel clicks` and ask me to test.
-
 ## Behaviour to keep
+- Call / revive / feed on the pet button works in game. Forever's spellbook
+  shows "Call <pet name>"; summoning is Call Pet 1–5 (IDs 883, 83242–83245).
+  If a change to the pet button breaks it, add diagnostics to
+  `/kennel spells` / `/kennel clicks` and ask me to test rather than guessing.
 - Pet button is a secure button driven by a state driver; never change its
   attributes in combat (queue for PLAYER_REGEN_ENABLED via `ApplyMacros`).
 - Setup steps run through `Try()` so one failure prints once instead of
