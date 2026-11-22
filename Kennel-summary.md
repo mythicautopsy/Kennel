@@ -1,6 +1,6 @@
 # Kennel: project summary (v2.11.0, formerly HunterPetBar)
 
-A small WoW Forever addon for Hunters. **Status: written but never loaded in game, and the Lua was not syntax-checked** (no Lua interpreter in the build environment). Test first and fix load errors before adding features.
+A small WoW Forever addon for Hunters. **Status: released (no longer Beta).** Loaded and tested in game; Call Pet from the pet button confirmed working in 2.11.0.
 
 ## What it does
 - **One pet button** (secure button, `SecureActionButtonTemplate`)
@@ -51,10 +51,10 @@ Esc > Key Bindings > Kennel: left click and right click of the pet button (`CLIC
 - Author: mythicautopsy - The Monsoon Brigade @ Alliance PVE (in toc `## Author`, README, LICENSE).
 - Naming convention (all addons): plain name for folder/toc/title; listing name `<Name> – <what it does> (WoW Forever)`; upload file `<Name>-<version>-forever.zip`.
 - Package includes README.md (also the CurseForge description) and MIT LICENSE; logo `Kennel-logo-400.png` (original design, 400x400).
-- Release as Beta until call/revive work.
+- Released as a full release (no longer Beta) now that Call Pet works.
 
 ## Changes
-- 2.11.0: user reports call still not working in 2.10. Research: Forever runs the retail-style engine, where summoning is Call Pet 1-5 (IDs 883, 83242-83245, one per stable slot) and retail macros use `/cast [nopet] Call Pet 1`. Likely bug: the spellbook "Call Neko" entry is a display name or a flyout, and 2.10 used `info.spellID or info.actionID`, which for a flyout is the flyout number. Now: flyout entries are skipped (spellID only); call uses the known Call Pet slot spell whose shown name matches the last pet, else the first known slot; revive/feed prefer standard IDs 982/6991 when known. `/kennel spells` lists known call slots and what left/right click will cast.
+- 2.11.0: user reports call still not working in 2.10. Research: Forever runs the retail-style engine, where summoning is Call Pet 1-5 (IDs 883, 83242-83245, one per stable slot) and retail macros use `/cast [nopet] Call Pet 1`. Likely bug: the spellbook "Call Neko" entry is a display name or a flyout, and 2.10 used `info.spellID or info.actionID`, which for a flyout is the flyout number. Now: flyout entries are skipped (spellID only); call uses the known Call Pet slot spell whose shown name matches the last pet, else the first known slot; revive/feed prefer standard IDs 982/6991 when known. `/kennel spells` lists known call slots and what left/right click will cast. Test status (from user): Call Pet from the pet button now works in game.
 - 2.10.0: click test from user showed clicks arrive and the macro runs `/cast ... [nopet] Call Neko` but nothing is cast: on Forever the shown name "Call <pet>" can't be cast by name. Left click is no longer one macro: a secure state driver (`[@pet,dead] dead; [nopet] nopet; alive`, SecureHandlerStateTemplate) sets `type1=spell` with the spell ID for Call/Revive (Revive also when `petDead` is known), and `type1=macro` for Feed + food. IDs come from the spellbook entry, else Classic IDs 883/982 if known. Clicks registered on one edge only (key down or up, per `ActionButtonUseKeyDown`), since both fired before. Click echo shows `cast spell <id>`.
 - 2.9.0: auto-buy ammo on MERCHANT_SHOW (on by default, `autoBuyAmmo`, target `ammoTarget` default 1000). Picks merchant ammo matching the weapon (arrow for bow/crossbow, bullet for gun) that is purchasable/usable with required level <= player level: highest required level, then item level, then cheapest. Buys ceil((target - all ammo of that kind in bags) / bundle) purchases, capped by stock, money and free bag slots, one `BuyMerchantItem(index)` every 0.3s; stops if the vendor closes; prints what it bought and the cost. Options window: checkbox + 'Top up to' slider 200-4000. Slash: `/kennel buy <n>|on|off`.
 - Test status (from user): summon spell is "Call <pet's name>" and `/kennel spells` reports it OK, so name lookup works; left-click Call still fails, cause unknown until the click test is done.
