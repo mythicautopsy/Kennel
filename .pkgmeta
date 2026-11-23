@@ -2,3 +2,6 @@ package-as: Kennel
 
 ignore:
   - .github
+  - Kennel-logo-400.png
+  - Kennel-summary.md
+  - CLAUDE.md
