@@ -9,6 +9,7 @@ local defaults = {
     lowAmmo = 200,
     lowFood = 5,
     autoBuyAmmo = true,
+    skipBuffFood = true,
     ammoTarget = 1000,
     locked = false,
     shown = true,
@@ -834,6 +835,56 @@ end
 local foodList = {} -- every food in your bags the pet will eat, best first
 local foodFrame
 
+-- Food that gives a buff says "Well Fed" in its tooltip. Kennel reads the
+-- tooltip of each food in your bags and leaves those for you to eat.
+local buffFoodCache = {} -- itemID -> true (buff food) / false (plain food)
+local buffSkipped = {}   -- names of buff foods skipped in the last pick
+local scanTip
+local tipTries = {}      -- itemID -> times the tooltip came back empty
+
+local function BagTooltipText(bag, slot)
+    local lines = {}
+    if C_TooltipInfo and C_TooltipInfo.GetBagItem then
+        local ok, data = pcall(C_TooltipInfo.GetBagItem, bag, slot)
+        if ok and type(data) == "table" and data.lines then
+            for _, line in ipairs(data.lines) do
+                if line.leftText then lines[#lines + 1] = line.leftText end
+            end
+            return table.concat(lines, "\n")
+        end
+    end
+    -- older clients: read a hidden tooltip
+    if not scanTip then
+        scanTip = CreateFrame("GameTooltip", "KennelScanTip", nil, "GameTooltipTemplate")
+    end
+    scanTip:SetOwner(WorldFrame, "ANCHOR_NONE")
+    scanTip:ClearLines()
+    pcall(scanTip.SetBagItem, scanTip, bag, slot)
+    for i = 1, scanTip:NumLines() do
+        local fs = _G["KennelScanTipTextLeft" .. i]
+        local t = fs and fs:GetText()
+        if t then lines[#lines + 1] = t end
+    end
+    scanTip:Hide()
+    return table.concat(lines, "\n")
+end
+
+-- true = buff food, false = plain food, nil = tooltip not loaded yet (try again later)
+local function IsBuffFood(id, bag, slot)
+    if buffFoodCache[id] ~= nil then return buffFoodCache[id] end
+    local text = BagTooltipText(bag, slot)
+    if not text or text == "" then
+        -- not loaded yet: ask again a few times, then treat it as plain food
+        tipTries[id] = (tipTries[id] or 0) + 1
+        if tipTries[id] < 4 then return nil end
+        buffFoodCache[id] = false
+        return false
+    end
+    local isBuff = text:lower():find("well fed", 1, true) ~= nil
+    buffFoodCache[id] = isBuff
+    return isBuff
+end
+
 local function PickFood()
     foodDirty = false
     local old = autoFood and autoFood.id
@@ -843,6 +894,8 @@ local function PickFood()
         -- (with no pet out the diet is unknown, so keep the last choice)
         local diet = PetDiet()
         local seen, list = {}, {}
+        local retry = false
+        buffSkipped = {}
         for bag = 0, (NUM_BAG_SLOTS or 4) do
             for slot = 1, BagSize(bag) do
                 local id, count, icon = BagSlot(bag, slot)
@@ -854,8 +907,18 @@ local function PickFood()
                         local name, _, _, itemLevel, _, _, _, _, _, _, _, classID = ItemInfo(id)
                         local kind = FoodKind(name)
                         -- food & drink (0) or cooking ingredients (7) only, of a kind the pet eats
-                        if name and kind and (classID == 0 or classID == 7)
-                            and (not diet or diet[kind]) and not Refused(id) then
+                        local ok = name and kind and (classID == 0 or classID == 7)
+                            and (not diet or diet[kind]) and not Refused(id)
+                        if ok and KennelDB.skipBuffFood then
+                            local buff = IsBuffFood(id, bag, slot)
+                            if buff == nil then
+                                ok, retry = false, true -- tooltip not ready: skip for now, look again soon
+                            elseif buff then
+                                ok = false
+                                buffSkipped[#buffSkipped + 1] = name
+                            end
+                        end
+                        if ok then
                             e = { id = id, name = name, kind = kind, count = count or 1, level = itemLevel or 0, icon = icon }
                             seen[id] = e
                             list[#list + 1] = e
@@ -873,6 +936,7 @@ local function PickFood()
         end)
         foodList = list
         autoFood = list[1]
+        if retry then foodDirty = true end
     end
     if (autoFood and autoFood.id) ~= old then ApplyMacros() end
 end
@@ -959,6 +1023,10 @@ local function CreateFood()
                 if autoFood and e.id == autoFood.id then r, g, b = 0.6, 1, 0.6 end
                 GameTooltip:AddDoubleLine(e.name .. " (" .. e.kind .. ")", tostring(c), r, g, b, 1, 1, 1)
             end
+        end
+        if KennelDB.skipBuffFood and #buffSkipped > 0 then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine("Kept for you (Well Fed buff): " .. table.concat(buffSkipped, ", "), 1, 0.82, 0.4, true)
         end
         GameTooltip:AddLine("Feed with a left click on the pet button.", 0.6, 0.6, 0.6, true)
         GameTooltip:Show()
@@ -1163,7 +1231,7 @@ end
 
 local function BuildOptions()
     local f = CreateFrame("Frame", "KennelOptions", UIParent)
-    f:SetSize(400, 560)
+    f:SetSize(400, 586)
     f:SetPoint("CENTER")
     f:SetFrameStrata("DIALOG")
     f:SetClampedToScreen(true)
@@ -1258,12 +1326,16 @@ local function BuildOptions()
     local useBtn = MakeButton(f, "Use", 44, useBoxFood)
     useBtn:SetPoint("LEFT", box, "RIGHT", 6, 0)
 
+    add(MakeCheck(f, "Don't feed foods that give a Well Fed buff", 16, -248,
+        function() return KennelDB.skipBuffFood end,
+        function(v) KennelDB.skipBuffFood = v; foodDirty = true end))
+
     local foodLine = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    foodLine:SetPoint("TOPLEFT", 22, -252)
+    foodLine:SetPoint("TOPLEFT", 22, -278)
     foodLine:SetWidth(360)
     foodLine:SetJustifyH("LEFT")
 
-    add(MakeSlider(f, "Food count turns red at", 20, -276, 0, 40, 1, "%d",
+    add(MakeSlider(f, "Food count turns red at", 20, -302, 0, 40, 1, "%d",
         function() return KennelDB.lowFood or 5 end,
         function(v) KennelDB.lowFood = v end))
     local forget = MakeButton(f, "Forget refused foods", 140, function()
@@ -1271,33 +1343,33 @@ local function BuildOptions()
         foodDirty = true
         Print("forgot every food your pets refused.")
     end)
-    forget:SetPoint("TOPRIGHT", -16, -290)
+    forget:SetPoint("TOPRIGHT", -16, -316)
 
     -- ammo
-    heading("Ammo", -336)
-    add(MakeSlider(f, "Ammo count turns red at", 20, -352, 0, 1000, 50, "%d",
+    heading("Ammo", -362)
+    add(MakeSlider(f, "Ammo count turns red at", 20, -378, 0, 1000, 50, "%d",
         function() return KennelDB.lowAmmo or 200 end,
         function(v) KennelDB.lowAmmo = v end))
 
     -- troubleshooting
-    add(MakeCheck(f, "Buy ammo automatically at vendors", 16, -400,
+    add(MakeCheck(f, "Buy ammo automatically at vendors", 16, -426,
         function() return KennelDB.autoBuyAmmo end,
         function(v) KennelDB.autoBuyAmmo = v end))
     local buyNote = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    buyNote:SetPoint("TOPLEFT", 44, -424)
+    buyNote:SetPoint("TOPLEFT", 44, -450)
     buyNote:SetWidth(330)
     buyNote:SetJustifyH("LEFT")
     buyNote:SetText("Buys the highest-level arrows or bullets you can use for your weapon.")
-    add(MakeSlider(f, "Top up to (ammo in bags)", 20, -440, 200, 4000, 100, "%d",
+    add(MakeSlider(f, "Top up to (ammo in bags)", 20, -466, 200, 4000, 100, "%d",
         function() return KennelDB.ammoTarget or 1000 end,
         function(v) KennelDB.ammoTarget = v end))
 
-    heading("Troubleshooting", -496)
-    add(MakeCheck(f, "Show clicks in chat", 16, -512,
+    heading("Troubleshooting", -522)
+    add(MakeCheck(f, "Show clicks in chat", 16, -538,
         function() return KennelDB.showClicks end,
         function(v) KennelDB.showClicks = v or nil end))
     local spellsBtn = MakeButton(f, "Check pet spells", 130, function() SlashCmdList["KENNEL"]("spells") end)
-    spellsBtn:SetPoint("TOPRIGHT", -16, -514)
+    spellsBtn:SetPoint("TOPRIGHT", -16, -540)
 
     options = f
     options.foodBox = box

@@ -15,7 +15,7 @@ auto-buy ammo at vendors and an options window. Released (no longer Beta).
 
 ## SavedVariables `KennelDB`
 - From `defaults`: food, lowAmmo (200), lowFood (5), autoBuyAmmo, ammoTarget
-  (1000), locked, shown, scale, point/x/y.
+  (1000), skipBuffFood (true), locked, shown, scale, point/x/y.
 - Also: `petDead`, `lastPet`, `refused[family]`, `tooLow`.
 
 ## Behaviour to keep
@@ -27,7 +27,8 @@ auto-buy ammo at vendors and an options window. Released (no longer Beta).
   attributes in combat (queue for PLAYER_REGEN_ENABLED via `ApplyMacros`).
 - Setup steps run through `Try()` so one failure prints once instead of
   breaking the addon.
-- Food: lowest item level first; learn from refusals. Ammo: bags + quiver,
+- Food: lowest item level first; learn from refusals; skip "Well Fed" buff
+  foods (tooltip scan) unless `skipBuffFood` is off. Ammo: bags + quiver,
   matching weapon type; auto-buy never exceeds money or bag space.
 - Not wanted: an Auto Shot bar.
 

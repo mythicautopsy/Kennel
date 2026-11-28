@@ -2,7 +2,7 @@
 ## Title: Kennel
 ## Notes: Hunter pet, food and ammo bar for WoW Forever: call / revive / feed button, pet food and ammo counts, auto-buy ammo.
 ## Author: mythicautopsy - The Monsoon Brigade @ Alliance PVE
-## Version: 2.11.0
+## Version: 2.12.0
 ## SavedVariables: KennelDB
 ## X-Category: Hunter
 ## X-Website: https://github.com/mythicautopsy/Kennel

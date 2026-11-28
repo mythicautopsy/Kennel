@@ -16,6 +16,7 @@ A small three-icon bar for Hunters on **WoW: Forever**: one button for your pet,
 - Picks food from your bags automatically, matching your pet's diet.
 - Uses your lowest-level food first, to save your better food.
 - Learns from refusals: if your pet won't eat something, Kennel skips it from then on.
+- Leaves food that gives a "Well Fed" buff for you (can be turned off in the options).
 - Shows the food icon and how many you have; the tooltip lists every food your pet eats.
 - Or set a food yourself.
 
@@ -49,7 +50,6 @@ Type `/kennel` (or right-click the bar's drag handle) to change everything: show
 ## Known issues
 
 - Food kinds are guessed from item names; unusual food names may be missed. Set those with `/kennel food <name>`.
-- Auto food doesn't know which foods give a "Well Fed" buff.
 
 Bug reports are welcome. Please include the output of `/kennel debug`.
 
